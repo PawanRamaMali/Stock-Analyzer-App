@@ -1,0 +1,112 @@
+# STOCK ANALYZER APP - DATA ANALYSIS -----
+# Version 1
+
+# APPLICATION DESCRIPTION ----
+# - The user will select 1 stock from the SP 500 stock index
+# - The functionality is designed to pull the past 180 days of stock data
+# - We will implement 2 moving averages - short (fast) and long (slow)
+# - We will produce a timeseries visualization
+# - We will produce automated commentary based on the moving averages
+
+# REPRODUCIBILITY REQUIREMENTS
+# - The functionality is designed to pull the past 180 days of stock data from today's date
+# - Because of this, your analysis may differ from mine
+# - To reproduce my analysis, replace today() with ymd("2019-08-19")
+
+# Required Libraries ----
+library(plotly)
+library(tidyquant)
+library(tidyverse)
+library(fs)
+
+
+
+# 1.0 Get Stock List----
+stock_list_tbl <- tq_index("SP500") %>% 
+  select(symbol, company) %>% 
+  arrange(symbol) %>% 
+  mutate(label = str_c(symbol, company, sep = ", ")) %>% 
+  select(label)
+
+stock_list_tbl
+
+get_stock_list <- function(stock_index="SP500"){
+  tq_index(stock_index) %>% 
+    select(symbol, company) %>% 
+    arrange(symbol) %>% 
+    mutate(label = str_c(symbol, company, sep = ", ")) %>% 
+    select(label)
+  
+}
+
+tq_index_options()
+
+get_stock_list("DOW")
+
+get_stock_list()
+
+# 2.0 EXTRACT SYMBOL BASED ON USER INPUT ----
+
+user_input <- "AAPL, Apple Inc. "
+
+user_input %>% str_split(pattern = ", ") %>% pluck(1,1)
+
+
+get_symbol_from_user_input <- function(user_input){
+  user_input %>% str_split(pattern = ", ") %>% pluck(1,1)
+}
+
+
+"ABC, AmerisourceBergen Corporation" %>% get_symbol_from_user_input()
+
+
+# 3.0 GET STOCK DATA ----
+
+from <-  today() - days(180)
+to   <-  today()
+
+"ABC" %>% 
+  tq_get(get = "stock.prices", from =from, to= to ) %>% 
+  select(date, adjusted) %>% 
+  mutate(mavg_short = rollmean(adjusted, k=5, na.pad = TRUE, align = "right")) %>% 
+  mutate(mavg_long = rollmean(adjusted, k=50, na.pad = TRUE, align = "right"))
+
+get_stock_data <- function(stock_symbol,
+                           from = today() - days(180),
+                           to = today(),
+                           mavg_short=20,
+                           mavg_long=50) {
+  
+  stock_symbol %>% 
+    tq_get(get = "stock.prices", from =from, to= to ) %>% 
+    select(date, adjusted) %>% 
+    mutate(mavg_short = rollmean(adjusted, k=mavg_short, na.pad = TRUE, align = "right")) %>% 
+    mutate(mavg_long = rollmean(adjusted, k=mavg_long, na.pad = TRUE, align = "right"))
+  
+  
+}
+
+stock_data_tbl <-  get_stock_data("A",
+               from="2006-01-01",
+               to="2008-01-01",
+               mavg_short = 3)
+
+# 4.0 PLOT STOCK DATA ----
+
+stock_data_tbl %>% 
+  gather(key="legend", value="value", adjusted:mavg_long) %>% 
+  ggplot(aes(date, value, color = legend, group = legend)) +
+  geom_line(aes(linetype = legend))
+  
+
+
+# 5.0 GENERATE COMMENTARY ----
+
+
+
+# 6.0 TEST WORKFLOW ----
+
+
+
+# 7.0 SAVE SCRIPTS ----
+
