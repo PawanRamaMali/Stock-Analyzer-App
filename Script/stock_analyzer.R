@@ -93,18 +93,93 @@ stock_data_tbl <-  get_stock_data("A",
 
 # 4.0 PLOT STOCK DATA ----
 
-stock_data_tbl %>% 
-  gather(key="legend", value="value", adjusted:mavg_long) %>% 
-  ggplot(aes(date, value, color = legend, group = legend)) +
-  geom_line(aes(linetype = legend))
-  
 
+plot_stock_data <- 
+  
+  g <- stock_data_tbl %>%
+  gather(key = "legend", value = "value", adjusted:mavg_long, factor_key = TRUE) %>%
+  
+  ggplot(aes(date, value, color = legend, group = legend)) +
+  geom_line(aes(linetype = legend)) +
+  theme_tq() +
+  scale_y_continuous(labels = scales::dollar_format(largest_with_cents = 10)) +
+  scale_color_tq() +
+  labs(y = "Adjusted Share Price", x = "")
+
+ggplotly(g)
+
+plot_stock_data <- function(data) {
+  g <- data %>%
+    gather(key = "legend", value = "value", adjusted:mavg_long, factor_key = TRUE) %>%
+    
+    ggplot(aes(date, value, color = legend, group = legend)) +
+    geom_line(aes(linetype = legend)) +
+    theme_tq() +
+    scale_y_continuous(labels = scales::dollar_format(largest_with_cents = 10)) +
+    scale_color_tq() +
+    labs(y = "Adjusted Share Price", x = "")
+  
+  ggplotly(g)
+}
+
+plot_stock_data(stock_data_tbl)
+
+"AAPL" %>% 
+  get_stock_data() %>%
+  plot_stock_data()
 
 # 5.0 GENERATE COMMENTARY ----
+
+warning_signal <- stock_data_tbl %>%
+  tail(1) %>%
+  mutate(mavg_warning_flag = mavg_short < mavg_long) %>%
+  pull(mavg_warning_flag)
+
+n_short <- stock_data_tbl %>% pull(mavg_short) %>% is.na() %>% sum() + 1
+n_long  <- stock_data_tbl %>% pull(mavg_long) %>% is.na() %>% sum() + 1
+
+if (warning_signal) {
+  str_glue("In reviewing the stock prices of {user_input}, 
+           the {n_short}-day moving average is below the {n_long}-day moving average,
+           indicating negative trends")
+} else {
+  str_glue("In reviewing the stock prices of {user_input},
+           the {n_short}-day moving average is above the {n_long}-day moving average,
+           indicating positive trends")
+  
+}
+
+
+generate_commentary <- function(data, user_input) {
+  warning_signal <- data %>%
+    tail(1) %>%
+    mutate(mavg_warning_flag = mavg_short < mavg_long) %>%
+    pull(mavg_warning_flag)
+  
+  n_short <- data %>% pull(mavg_short) %>% is.na() %>% sum() + 1
+  n_long  <- data %>% pull(mavg_long) %>% is.na() %>% sum() + 1
+  
+  if (warning_signal) {
+    str_glue("In reviewing the stock prices of {user_input}, the {n_short}-day moving average is below the {n_long}-day moving average, indicating negative trends")
+  } else {
+    str_glue("In reviewing the stock prices of {user_input}, the {n_short}-day moving average is above the {n_long}-day moving average, indicating positive trends")
+    
+  }
+}
+
+generate_commentary(stock_data_tbl, user_input = user_input)
 
 
 
 # 6.0 TEST WORKFLOW ----
+
+get_stock_list("SP500")
+
+"ABT, Abbott Laboratories" %>% 
+  get_symbol_from_user_input() %>%
+  get_stock_data(from = "2018-01-01", to = "2019-01-01") %>%
+  # plot_stock_data()
+  generate_commentary(user_input = "ABT, Abbott Laboratories")
 
 
 
