@@ -185,3 +185,9 @@ get_stock_list("SP500")
 
 # 7.0 SAVE SCRIPTS ----
 
+fs::dir_create("functions")
+
+dump(
+  list = c("get_stock_list", "get_symbol_from_user_input", "get_stock_data", "plot_stock_data", "generate_commentary"),
+  file = "functions/stock_analysis_functions.R", 
+  append = FALSE)
