@@ -16,3 +16,7 @@
 * - The functionality is designed to pull the past 180 days of stock data from today's date
 * - Because of this, your analysis may differ from mine
 * - To reproduce my analysis, replace today() with ymd("2019-08-20")*
+
+### Plot Output
+
+![image](https://user-images.githubusercontent.com/11299574/135127769-5a7bd58a-8e9f-4e1b-bf8d-d30df004ca91.png)
