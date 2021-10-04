@@ -3,6 +3,7 @@
 R Shiny app to analyze stocks
 
 
+<br/>
 
 ## FAQs
 
